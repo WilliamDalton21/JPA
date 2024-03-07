@@ -1,0 +1,69 @@
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import java.util.List;
+
+@SpringBootApplication
+public class TodoListApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(TodoListApplication.class, args);
+    }
+}
+
+@Entity
+class Todo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String task;
+
+    public Todo() {}
+
+    public Todo(String task) {
+        this.task = task;
+    }
+
+    // Getters and setters
+}
+
+interface TodoRepository extends JpaRepository<Todo, Long> {
+}
+
+@Controller
+@RequestMapping("/")
+class TodoController {
+
+    private final TodoRepository todoRepository;
+
+    public TodoController(TodoRepository todoRepository) {
+        this.todoRepository = todoRepository;
+    }
+
+    @GetMapping
+    public String list(Model model) {
+        List<Todo> todos = todoRepository.findAll();
+        model.addAttribute("todos", todos);
+        return "list";
+    }
+
+    @PostMapping
+    public String add(@RequestParam String task) {
+        todoRepository.save(new Todo(task));
+        return "redirect:/";
+    }
+
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable Long id) {
+        todoRepository.deleteById(id);
+        return "redirect:/";
+    }
+}
