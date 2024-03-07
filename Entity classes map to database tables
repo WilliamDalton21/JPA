@@ -1,0 +1,74 @@
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+class Department {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Employee> employees = new HashSet<>();
+
+    // Constructors, getters and setters
+}
+
+@Entity
+class Employee {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    // Constructors, getters and setters
+}
+
+public class Main {
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("CompanyPU");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+
+            // Create departments
+            Department department1 = new Department();
+            department1.setName("IT Department");
+
+            Department department2 = new Department();
+            department2.setName("HR Department");
+
+            // Create employees
+            Employee employee1 = new Employee();
+            employee1.setName("John Doe");
+            employee1.setDepartment(department1);
+
+            Employee employee2 = new Employee();
+            employee2.setName("Jane Smith");
+            employee2.setDepartment(department2);
+
+            // Persist entities
+            em.persist(department1);
+            em.persist(department2);
+            em.persist(employee1);
+            em.persist(employee2);
+
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            em.close();
+            emf.close();
+        }
+    }
+}
