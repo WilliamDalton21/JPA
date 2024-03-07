@@ -1,0 +1,105 @@
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+class Author {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Book> books = new HashSet<>();
+
+    // Constructors, getters and setters
+}
+
+@Entity
+class Publisher {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = "publisher", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Book> books = new HashSet<>();
+
+    // Constructors, getters and setters
+}
+
+@Entity
+class Book {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private String isbn;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private Author author;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publisher_id")
+    private Publisher publisher;
+
+    // Constructors, getters and setters
+}
+
+public class Main {
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("BookPU");
+        EntityManager em = emf.createEntityManager();
+
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+
+            // Create authors
+            Author author1 = new Author();
+            author1.setName("Author 1");
+
+            Author author2 = new Author();
+            author2.setName("Author 2");
+
+            // Create publishers
+            Publisher publisher1 = new Publisher();
+            publisher1.setName("Publisher 1");
+
+            Publisher publisher2 = new Publisher();
+            publisher2.setName("Publisher 2");
+
+            // Create books
+            Book book1 = new Book();
+            book1.setTitle("Book 1");
+            book1.setIsbn("123456");
+            book1.setAuthor(author1);
+            book1.setPublisher(publisher1);
+
+            Book book2 = new Book();
+            book2.setTitle("Book 2");
+            book2.setIsbn("789012");
+            book2.setAuthor(author2);
+            book2.setPublisher(publisher2);
+
+            // Persist entities
+            em.persist(author1);
+            em.persist(author2);
+            em.persist(publisher1);
+            em.persist(publisher2);
+            em.persist(book1);
+            em.persist(book2);
+
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            em.close();
+            emf.close();
+        }
+    }
+}
